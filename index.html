@@ -1,118 +1,322 @@
-∫
-BC Calculus
-Class Forum
-登录 注册
-邮箱
-密码
-登录
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BC Calculus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
 
-∫
-BC Calculus
-Class Forum
-Forum 知识点 公告 教师端
+  <!-- AUTH OVERLAY -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <span class="logo-math">∫</span>
+        <div>
+          <div class="logo-title">BC Calculus</div>
+          <div class="logo-sub">Class Forum</div>
+        </div>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuth('login')">登录</button>
+        <button class="auth-tab" onclick="switchAuth('register')">注册</button>
+      </div>
+      <div id="auth-login" class="auth-form">
+        <div class="form-group">
+          <label>邮箱</label>
+          <input type="email" id="login-email" placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+          <label>密码</label>
+          <input type="password" id="login-password" placeholder="密码" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <button class="submit-btn" onclick="doLogin()">登录</button>
+        <div id="login-msg" class="auth-msg"></div>
+      </div>
+      <div id="auth-register" class="auth-form" style="display:none">
+        <div class="form-group">
+          <label>显示名字（其他人看到的）</label>
+          <input type="text" id="reg-name" placeholder="你的名字" maxlength="20">
+        </div>
+        <div class="form-group">
+          <label>邮箱</label>
+          <input type="email" id="reg-email" placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+          <label>密码</label>
+          <input type="password" id="reg-password" placeholder="至少6位">
+        </div>
+        <button class="submit-btn" onclick="doRegister()">注册</button>
+        <div id="reg-msg" class="auth-msg"></div>
+      </div>
+    </div>
+  </div>
 
-Ask. Answer. Master.
-发帖提问，互相帮助，一起搞定 BC Calc
-limd/dx∑∫∂
-全部 U1 U2 U3 U4 U5 U6 U7 U8 U9 U10
-+ 发帖提问
-加载中...
-怎么发帖
-	1	选择对应的 Unit
-	2	点"发帖提问"
-	3	填写标题和问题
-	4	可以上传截图或PDF
-	5	其他同学会来回答
-Unit 对照表
-U1极限与连续
-U2导数：定义与基本性质
-U3导数：复合、隐函数与反函数
-U4导数的实际应用
-U5导数的分析应用
-U6积分
-U7微分方程
-U8积分的应用
-U9参数方程、极坐标与向量
-U10无穷数列与级数
-01
-极限与连续
-Limits and Continuity
-→
-02
-导数：定义与基本性质
-Differentiation: Definition and Fundamental Properties
-→
-03
-导数：复合、隐函数与反函数
-Differentiation: Composite, Implicit, and Inverse Functions
-→
-04
-导数的实际应用
-Contextual Applications of Differentiation
-→
-05
-导数的分析应用
-Analytical Applications of Differentiation
-→
-06
-积分
-Integration and Accumulation of Change
-→
-07
-微分方程
-Differential Equations
-→
-08
-积分的应用
-Applications of Integration
-→
-09
-参数方程、极坐标与向量
-Parametric Equations, Polar Coordinates, and Vector-Valued Functions
-→
-10
-无穷数列与级数
-Infinite Sequences and Series
-→
-加载中...
-发帖提问
-×
-Unit
-            U1 — 极限与连续
-            U2 — 导数：定义与基本性质
-            U3 — 导数：复合、隐函数与反函数
-            U4 — 导数的实际应用
-            U5 — 导数的分析应用
-            U6 — 积分
-            U7 — 微分方程
-            U8 — 积分的应用
-            U9 — 参数方程、极坐标与向量
-            U10 — 无穷数列与级数
-          
-紧急程度
-普通 点击标记为紧急 ‼️
-标题
-问题描述（支持 LaTeX，用 $公式$ 包裹）
-上传截图或PDF（可选，最大50MB）
-↑
-点击上传截图或PDF
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-math">∫</span>
+        <div>
+          <div class="logo-title">BC Calculus</div>
+          <div class="logo-sub">Class Forum</div>
+        </div>
+      </div>
+      <nav class="main-nav">
+        <button class="nav-btn active" onclick="showSection('forum', this)">Forum</button>
+        <button class="nav-btn" onclick="showSection('notes', this)">知识点</button>
+        <button class="nav-btn" onclick="showSection('announcements', this)">公告</button>
+        <button class="nav-btn teacher-btn" onclick="showTeacherLogin()">教师端</button>
+        <div class="user-badge" id="user-badge"></div>
+        <button class="nav-btn logout-btn" id="logout-btn" onclick="doLogout()" style="display:none">退出</button>
+      </nav>
+    </div>
+  </header>
 
-发布
-问题详情
-×
+  <div class="hero">
+    <div class="hero-inner">
+      <h1 class="hero-title">Ask. Answer. <em>Master.</em></h1>
+      <p class="hero-sub">发帖提问，互相帮助，一起搞定 BC Calc</p>
+    </div>
+    <div class="hero-deco"><span>lim</span><span>d/dx</span><span>∑</span><span>∫</span><span>∂</span></div>
+  </div>
 
-回答 0
+  <main class="main-wrap">
 
-↑
-可选：上传截图或PDF
+    <div id="section-forum" class="content-section active">
+      <div class="unit-tabs">
+        <button class="unit-tab active" onclick="selectUnit('all', this)">全部</button>
+        <button class="unit-tab" onclick="selectUnit('1', this)">U1</button>
+        <button class="unit-tab" onclick="selectUnit('2', this)">U2</button>
+        <button class="unit-tab" onclick="selectUnit('3', this)">U3</button>
+        <button class="unit-tab" onclick="selectUnit('4', this)">U4</button>
+        <button class="unit-tab" onclick="selectUnit('5', this)">U5</button>
+        <button class="unit-tab" onclick="selectUnit('6', this)">U6</button>
+        <button class="unit-tab" onclick="selectUnit('7', this)">U7</button>
+        <button class="unit-tab" onclick="selectUnit('8', this)">U8</button>
+        <button class="unit-tab" onclick="selectUnit('9', this)">U9</button>
+        <button class="unit-tab" onclick="selectUnit('10', this)">U10</button>
+      </div>
+      <div class="forum-layout">
+        <div class="posts-column">
+          <button class="new-post-btn" onclick="openPostModal()">+ 发帖提问</button>
+          <div id="posts-list" class="posts-list"><div class="loading-state">加载中...</div></div>
+        </div>
+        <div class="sidebar">
+          <div class="sidebar-card">
+            <div class="sidebar-title">怎么发帖</div>
+            <ol class="sidebar-steps">
+              <li>选择对应的 Unit</li>
+              <li>点"发帖提问"</li>
+              <li>填写标题和问题</li>
+              <li>可以上传截图或PDF</li>
+              <li>其他同学会来回答</li>
+            </ol>
+          </div>
+          <div class="sidebar-card">
+            <div class="sidebar-title">Unit 对照表</div>
+            <div class="unit-map">
+              <div class="unit-row"><span>U1</span>极限与连续</div>
+              <div class="unit-row"><span>U2</span>导数：定义与基本性质</div>
+              <div class="unit-row"><span>U3</span>导数：复合、隐函数与反函数</div>
+              <div class="unit-row"><span>U4</span>导数的实际应用</div>
+              <div class="unit-row"><span>U5</span>导数的分析应用</div>
+              <div class="unit-row"><span>U6</span>积分</div>
+              <div class="unit-row"><span>U7</span>微分方程</div>
+              <div class="unit-row"><span>U8</span>积分的应用</div>
+              <div class="unit-row"><span>U9</span>参数方程、极坐标与向量</div>
+              <div class="unit-row"><span>U10</span>无穷数列与级数</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-提交回答
-知识点总结
-×
-老师还没有上传这个 Unit 的知识点总结，敬请期待。
-教师登录
-×
-密码
-登录
+    <div id="section-notes" class="content-section">
+      <div class="notes-grid">
+        <div class="unit-card" onclick="openNotes('1')"><div class="unit-num">01</div><div class="unit-name">极限与连续</div><div class="unit-tag">Limits and Continuity</div><div class="unit-arrow">→</div></div>
+        <div class="unit-card" onclick="openNotes('2')"><div class="unit-num">02</div><div class="unit-name">导数：定义与基本性质</div><div class="unit-tag">Differentiation: Definition and Fundamental Properties</div><div class="unit-arrow">→</div></div>
+        <div class="unit-card" onclick="openNotes('3')"><div class="unit-num">03</div><div class="unit-name">导数：复合、隐函数与反函数</div><div class="unit-tag">Differentiation: Composite, Implicit, and Inverse Functions</div><div class="unit-arrow">→</div></div>
+        <div class="unit-card" onclick="openNotes('4')"><div class="unit-num">04</div><div class="unit-name">导数的实际应用</div><div class="unit-tag">Contextual Applications of Differentiation</div><div class="unit-arrow">→</div></div>
+        <div class="unit-card" onclick="openNotes('5')"><div class="unit-num">05</div><div class="unit-name">导数的分析应用</div><div class="unit-tag">Analytical Applications of Differentiation</div><div class="unit-arrow">→</div></div>
+        <div class="unit-card" onclick="openNotes('6')"><div class="unit-num">06</div><div class="unit-name">积分</div><div class="unit-tag">Integration and Accumulation of Change</div><div class="unit-arrow">→</div></div>
+        <div class="unit-card" onclick="openNotes('7')"><div class="unit-num">07</div><div class="unit-name">微分方程</div><div class="unit-tag">Differential Equations</div><div class="unit-arrow">→</div></div>
+        <div class="unit-card" onclick="openNotes('8')"><div class="unit-num">08</div><div class="unit-name">积分的应用</div><div class="unit-tag">Applications of Integration</div><div class="unit-arrow">→</div></div>
+        <div class="unit-card" onclick="openNotes('9')"><div class="unit-num">09</div><div class="unit-name">参数方程、极坐标与向量</div><div class="unit-tag">Parametric Equations, Polar Coordinates, and Vector-Valued Functions</div><div class="unit-arrow">→</div></div>
+        <div class="unit-card" onclick="openNotes('10')"><div class="unit-num">10</div><div class="unit-name">无穷数列与级数</div><div class="unit-tag">Infinite Sequences and Series</div><div class="unit-arrow">→</div></div>
+      </div>
+    </div>
 
+    <div id="section-announcements" class="content-section">
+      <div id="announcements-list" class="announcements-list"><div class="loading-state">加载中...</div></div>
+    </div>
 
+  </main>
+
+  <!-- POST MODAL -->
+  <div id="post-modal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>发帖提问</h2>
+        <button class="modal-close" onclick="closePostModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Unit</label>
+          <select id="post-unit">
+            <option value="1">U1 — 极限与连续</option>
+            <option value="2">U2 — 导数：定义与基本性质</option>
+            <option value="3">U3 — 导数：复合、隐函数与反函数</option>
+            <option value="4">U4 — 导数的实际应用</option>
+            <option value="5">U5 — 导数的分析应用</option>
+            <option value="6">U6 — 积分</option>
+            <option value="7">U7 — 微分方程</option>
+            <option value="8">U8 — 积分的应用</option>
+            <option value="9">U9 — 参数方程、极坐标与向量</option>
+            <option value="10">U10 — 无穷数列与级数</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>紧急程度</label>
+          <div class="urgent-toggle">
+            <button class="urgent-btn" id="urgent-btn" onclick="toggleUrgent()">普通</button>
+            <span class="urgent-hint">点击标记为紧急 ‼️</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>标题</label>
+          <input type="text" id="post-title" placeholder="简短描述你的问题" maxlength="80">
+        </div>
+        <div class="form-group">
+          <label>问题描述（支持 LaTeX，用 $公式$ 包裹）</label>
+          <textarea id="post-body" placeholder="详细描述你的问题，例如：求 $\int x^2 dx$ 的结果..." rows="4"></textarea>
+        </div>
+        <div class="form-group">
+          <label>上传截图或PDF（可选，最大50MB）</label>
+          <div class="upload-area" onclick="document.getElementById('post-image').click()">
+            <input type="file" id="post-image" accept="image/*,.pdf" style="display:none" onchange="handleFileSelect(event)">
+            <div class="upload-icon">↑</div>
+            <div class="upload-text">点击上传截图或PDF</div>
+          </div>
+          <div id="file-preview" class="file-preview"></div>
+        </div>
+        <button class="submit-btn" onclick="submitPost()">发布</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DETAIL MODAL -->
+  <div id="detail-modal" class="modal-overlay" onclick="closeDetailModal(event)">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h2 id="detail-title">问题详情</h2>
+        <button class="modal-close" onclick="closeDetailModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="detail-content"></div>
+        <div class="comments-section">
+          <h3 class="comments-title">回答 <span id="comment-count">0</span></h3>
+          <div id="comments-list"></div>
+          <div class="add-comment">
+            <textarea id="comment-body" placeholder="写下你的回答，可以用 $公式$ 输入数学符号..." rows="3"></textarea>
+            <div class="upload-area" onclick="document.getElementById('comment-file').click()" style="margin-bottom:8px;">
+              <input type="file" id="comment-file" accept="image/*,.pdf" style="display:none" onchange="handleCommentFile(event)">
+              <div class="upload-icon">↑</div>
+              <div class="upload-text">可选：上传截图或PDF</div>
+            </div>
+            <div id="comment-file-preview" class="file-preview"></div>
+            <button class="submit-btn small" onclick="submitComment()">提交回答</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTES MODAL -->
+  <div id="notes-modal" class="modal-overlay" onclick="closeNotesModal(event)">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h2 id="notes-title">知识点总结</h2>
+        <button class="modal-close" onclick="closeNotesModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="notes-content" class="notes-content">
+          <div class="empty-notes">老师还没有上传这个 Unit 的知识点总结，敬请期待。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEACHER LOGIN -->
+  <div id="teacher-modal" class="modal-overlay" onclick="closeTeacherModal(event)">
+    <div class="modal modal-small">
+      <div class="modal-header">
+        <h2>教师登录</h2>
+        <button class="modal-close" onclick="closeTeacherModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>密码</label>
+          <input type="password" id="teacher-password" placeholder="输入教师密码" onkeydown="if(event.key==='Enter')teacherLogin()">
+        </div>
+        <button class="submit-btn" onclick="teacherLogin()">登录</button>
+        <div id="login-error" class="login-error"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEACHER PANEL -->
+  <div id="teacher-panel" class="teacher-panel" style="display:none">
+    <div class="tp-header">
+      <span>教师管理面板</span>
+      <button onclick="teacherLogout()">退出</button>
+    </div>
+    <div class="tp-tabs">
+      <button class="tp-tab active" onclick="tpTab('posts', this)">帖子管理</button>
+      <button class="tp-tab" onclick="tpTab('announce', this)">发公告</button>
+      <button class="tp-tab" onclick="tpTab('notes', this)">上传知识点</button>
+    </div>
+    <div id="tp-posts" class="tp-section active"><div id="tp-posts-list"></div></div>
+    <div id="tp-announce" class="tp-section">
+      <div class="form-group"><label>标题</label><input type="text" id="ann-title" placeholder="公告标题"></div>
+      <div class="form-group"><label>内容（支持 LaTeX）</label><textarea id="ann-body" rows="6" placeholder="公告内容..."></textarea></div>
+      <button class="submit-btn" onclick="postAnnouncement()">发布公告</button>
+    </div>
+    <div id="tp-notes" class="tp-section">
+      <div class="form-group">
+        <label>Unit</label>
+        <select id="notes-unit">
+          <option value="1">U1 — 极限与连续</option>
+          <option value="2">U2 — 导数：定义与基本性质</option>
+          <option value="3">U3 — 导数：复合、隐函数与反函数</option>
+          <option value="4">U4 — 导数的实际应用</option>
+          <option value="5">U5 — 导数的分析应用</option>
+          <option value="6">U6 — 积分</option>
+          <option value="7">U7 — 微分方程</option>
+          <option value="8">U8 — 积分的应用</option>
+          <option value="9">U9 — 参数方程、极坐标与向量</option>
+          <option value="10">U10 — 无穷数列与级数</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>知识点内容（支持LaTeX，可粘贴Overleaf内容或Google Drive链接）</label>
+        <textarea id="notes-body" rows="10" placeholder="粘贴LaTeX内容或PDF链接..."></textarea>
+      </div>
+      <button class="submit-btn" onclick="saveNotes()">保存</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
