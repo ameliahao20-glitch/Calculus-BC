@@ -235,10 +235,16 @@
           <h3 class="comments-title">回答 <span id="comment-count">0</span></h3>
           <div id="comments-list"></div>
           <div class="add-comment">
-            <input type="text" id="comment-author" placeholder="你的名字">
-            <textarea id="comment-body" placeholder="写下你的回答..." rows="3"></textarea>
-            <button class="submit-btn small" onclick="submitComment()">提交回答</button>
-          </div>
+  <input type="text" id="comment-author" placeholder="你的名字">
+  <textarea id="comment-body" placeholder="写下你的回答..." rows="3"></textarea>
+  <div class="upload-area" onclick="document.getElementById('comment-file').click()" style="margin-bottom:8px;">
+    <input type="file" id="comment-file" accept="image/*,.pdf" style="display:none" onchange="handleCommentFile(event)">
+    <div class="upload-icon">↑</div>
+    <div class="upload-text">可选：上传截图或PDF</div>
+  </div>
+  <div id="comment-file-preview" class="file-preview"></div>
+  <button class="submit-btn small" onclick="submitComment()">提交回答</button>
+</div>
         </div>
       </div>
     </div>
