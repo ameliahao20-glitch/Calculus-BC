@@ -1020,3 +1020,101 @@ body {
   line-height: 1.8;
 }
 
+/* ===== MATH KEYBOARD ===== */
+.math-keyboard {
+  background: var(--cream);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.mk-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.mk-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.mk-hint {
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.mk-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mk-btn {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--ink);
+  font-family: 'DM Serif Display', serif;
+  transition: all 0.15s;
+  min-width: 36px;
+  text-align: center;
+}
+
+.mk-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: #fff8f6;
+}
+
+/* ===== LATEX RENDERED NOTES ===== */
+.latex-rendered {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+.latex-rendered h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px;
+  margin: 20px 0 10px;
+  color: var(--ink);
+}
+
+.latex-rendered h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  margin: 16px 0 8px;
+  color: var(--ink);
+  border-bottom: 1.5px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.latex-rendered h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 12px 0 6px;
+  color: var(--ink);
+}
+
+.latex-rendered p {
+  margin-bottom: 10px;
+}
+
+.latex-rendered strong { font-weight: 700; }
+.latex-rendered em { font-style: italic; }
+
+/* ===== PIN BUTTON BLUE ===== */
+.tp-btn.pin {
+  background: #e8f0fe;
+  color: #1a6fcc;
+  border: 1px solid #c5d0fa;
+}
