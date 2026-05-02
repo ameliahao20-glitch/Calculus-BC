@@ -1,12 +1,10 @@
 // ============================================================
 // BC CALCULUS FORUM — app.js
-// 替换下面两行为你的 Supabase 项目信息
 // ============================================================
 const SUPABASE_URL = 'https://srahnugolqsjqqvaptem.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyYWhudWdvbHFzanFxdmFwdGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MDM1ODIsImV4cCI6MjA5MzI3OTU4Mn0.WFlWgi6lMB7thw9CXQIC7Yb-fIuMGLd6UhgzAzGCGJM';
 const TEACHER_PASSWORD = 'maythefivebewithu';
 
-// ============================================================
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -14,18 +12,13 @@ let currentUnit = 'all';
 let currentPostId = null;
 let isTeacher = false;
 let selectedFile = null;
+let selectedCommentFile = null;
 
-// ============================================================
-// INIT
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
   loadPosts();
   loadAnnouncements();
 });
 
-// ============================================================
-// NAVIGATION
-// ============================================================
 function showSection(name) {
   document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -33,9 +26,6 @@ function showSection(name) {
   event.target.classList.add('active');
 }
 
-// ============================================================
-// UNIT FILTER
-// ============================================================
 function selectUnit(unit, btn) {
   currentUnit = unit;
   document.querySelectorAll('.unit-tab').forEach(b => b.classList.remove('active'));
@@ -43,9 +33,6 @@ function selectUnit(unit, btn) {
   loadPosts();
 }
 
-// ============================================================
-// POSTS
-// ============================================================
 async function loadPosts() {
   const list = document.getElementById('posts-list');
   list.innerHTML = '<div class="loading-state">加载中...</div>';
@@ -73,9 +60,6 @@ async function loadPosts() {
   `).join('');
 }
 
-// ============================================================
-// POST MODAL
-// ============================================================
 function openPostModal() {
   document.getElementById('post-modal').classList.add('open');
 }
@@ -96,12 +80,25 @@ function handleFileSelect(e) {
   if (!file) return;
   selectedFile = file;
   const preview = document.getElementById('file-preview');
-
   if (file.type.startsWith('image/')) {
     const reader = new FileReader();
     reader.onload = ev => { preview.innerHTML = `<img src="${ev.target.result}" alt="preview">`; };
     reader.readAsDataURL(file);
   } else if (file.type === 'application/pdf') {
+    preview.innerHTML = `<div class="pdf-badge">📄 ${escHtml(file.name)}</div>`;
+  }
+}
+
+function handleCommentFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  selectedCommentFile = file;
+  const preview = document.getElementById('comment-file-preview');
+  if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = ev => { preview.innerHTML = `<img src="${ev.target.result}" alt="preview" style="max-width:100%;border-radius:8px;">`; };
+    reader.readAsDataURL(file);
+  } else {
     preview.innerHTML = `<div class="pdf-badge">📄 ${escHtml(file.name)}</div>`;
   }
 }
@@ -121,11 +118,10 @@ async function submitPost() {
 
   let fileUrl = null;
 
-  // Upload file if selected
   if (selectedFile) {
     const ext = selectedFile.name.split('.').pop();
     const path = `posts/${Date.now()}_${Math.random().toString(36).substr(2,8)}.${ext}`;
-    const { data: uploadData, error: uploadError } = await db.storage.from('uploads').upload(path, selectedFile);
+    const { error: uploadError } = await db.storage.from('uploads').upload(path, selectedFile);
     if (!uploadError) {
       const { data: urlData } = db.storage.from('uploads').getPublicUrl(path);
       fileUrl = urlData.publicUrl;
@@ -151,13 +147,9 @@ async function submitPost() {
   loadPosts();
 }
 
-// ============================================================
-// POST DETAIL
-// ============================================================
 async function openPost(id) {
   currentPostId = id;
-  const modal = document.getElementById('detail-modal');
-  modal.classList.add('open');
+  document.getElementById('detail-modal').classList.add('open');
 
   const { data: post } = await db.from('posts').select('*').eq('id', id).single();
   if (!post) return;
@@ -188,12 +180,11 @@ function closeDetailModal(e) {
   if (!e || e.target === e.currentTarget) {
     document.getElementById('detail-modal').classList.remove('open');
     currentPostId = null;
+    selectedCommentFile = null;
+    document.getElementById('comment-file-preview').innerHTML = '';
   }
 }
 
-// ============================================================
-// COMMENTS
-// ============================================================
 async function loadComments(postId) {
   const list = document.getElementById('comments-list');
   list.innerHTML = '<div style="color:var(--ink-faint);font-size:13px;">加载中...</div>';
@@ -210,6 +201,10 @@ async function loadComments(postId) {
     <div class="comment-card ${c.is_teacher ? 'teacher-comment' : ''}">
       <div class="comment-author">${escHtml(c.author)}${c.is_teacher ? ' 👩‍🏫' : ''}</div>
       <div class="comment-body">${escHtml(c.body)}</div>
+      ${c.file_url ? (c.file_type === 'image'
+        ? `<img src="${c.file_url}" style="max-width:100%;border-radius:8px;margin-top:8px;">`
+        : `<a href="${c.file_url}" target="_blank" class="notes-pdf-link">📄 查看PDF</a>`)
+        : ''}
       <div class="comment-date">${formatDate(c.created_at)}</div>
     </div>
   `).join('');
@@ -219,25 +214,46 @@ async function submitComment() {
   const author = document.getElementById('comment-author').value.trim();
   const body = document.getElementById('comment-body').value.trim();
   if (!author) { alert('请输入你的名字'); return; }
-  if (!body) { alert('请输入回答内容'); return; }
+  if (!body && !selectedCommentFile) { alert('请输入回答内容'); return; }
   if (!currentPostId) return;
 
   const btn = document.querySelector('.add-comment .submit-btn');
   btn.disabled = true;
+  btn.textContent = '提交中...';
 
-  await db.from('comments').insert({ post_id: currentPostId, author, body, is_teacher: isTeacher });
-  // Update comment count
+  let fileUrl = null;
+  let fileType = null;
+
+  if (selectedCommentFile) {
+    const ext = selectedCommentFile.name.split('.').pop();
+    const path = `comments/${Date.now()}_${Math.random().toString(36).substr(2,8)}.${ext}`;
+    const { error: uploadError } = await db.storage.from('uploads').upload(path, selectedCommentFile);
+    if (!uploadError) {
+      const { data: urlData } = db.storage.from('uploads').getPublicUrl(path);
+      fileUrl = urlData.publicUrl;
+      fileType = selectedCommentFile.type.startsWith('image/') ? 'image' : 'pdf';
+    }
+  }
+
+  await db.from('comments').insert({
+    post_id: currentPostId, author, body,
+    is_teacher: isTeacher,
+    file_url: fileUrl,
+    file_type: fileType
+  });
+
   await db.rpc('increment_comment_count', { post_id: currentPostId });
 
   document.getElementById('comment-body').value = '';
+  document.getElementById('comment-file-preview').innerHTML = '';
+  document.getElementById('comment-file').value = '';
+  selectedCommentFile = null;
   btn.disabled = false;
+  btn.textContent = '提交回答';
   loadComments(currentPostId);
   loadPosts();
 }
 
-// ============================================================
-// ANNOUNCEMENTS
-// ============================================================
 async function loadAnnouncements() {
   const list = document.getElementById('announcements-list');
   const { data } = await db.from('announcements').select('*').order('created_at', { ascending: false });
@@ -256,9 +272,6 @@ async function loadAnnouncements() {
   `).join('');
 }
 
-// ============================================================
-// NOTES
-// ============================================================
 function openNotes(unit) {
   const unitNames = {
     '1':'极限与连续','2':'导数定义与法则','3':'微分应用',
@@ -281,7 +294,6 @@ async function loadNotes(unit) {
     return;
   }
 
-  // Check if content contains a URL
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const withLinks = data.content.replace(urlRegex, url =>
     `<a href="${url}" target="_blank" class="notes-pdf-link">📄 打开文件</a>`
@@ -293,9 +305,6 @@ function closeNotesModal(e) {
   if (!e || e.target === e.currentTarget) document.getElementById('notes-modal').classList.remove('open');
 }
 
-// ============================================================
-// TEACHER
-// ============================================================
 function showTeacherLogin() {
   if (isTeacher) { toggleTeacherPanel(); return; }
   document.getElementById('teacher-modal').classList.add('open');
@@ -395,9 +404,6 @@ async function saveNotes() {
   alert(`Unit ${unit} 知识点已保存！`);
 }
 
-// ============================================================
-// HELPERS
-// ============================================================
 function escHtml(str) {
   if (!str) return '';
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
