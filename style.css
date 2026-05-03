@@ -1159,3 +1159,11 @@ body {
 .mq-editor .mq-cursor {
   border-color: var(--accent);
 }
+
+/* ===== PDF EMBED ===== */
+.pdf-embed {
+  width: 100%;
+  height: 80vh;
+  border: none;
+  border-radius: 8px;
+}

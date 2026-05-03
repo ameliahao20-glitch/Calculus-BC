@@ -426,17 +426,29 @@ async function loadNotes(unit) {
     return;
   }
 
-  // Check if content has any LaTeX commands
-  const hasLatex = data.content.includes('\\') || data.content.includes('\\section') || data.content.includes('\\vspace');
-  
+  const text = data.content.trim();
+
+  // Check if it's a Google Drive link
+  const driveMatch = text.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (driveMatch) {
+    const fileId = driveMatch[1];
+    const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+    content.innerHTML = `<iframe src="${embedUrl}" class="pdf-embed" allowfullscreen></iframe>`;
+    return;
+  }
+
+  // Check if it's any other PDF/file URL
+  if (text.startsWith('http') && (text.includes('.pdf') || text.includes('docs.google') || text.includes('onedrive'))) {
+    content.innerHTML = `<iframe src="${text}" class="pdf-embed" allowfullscreen></iframe>`;
+    return;
+  }
+
+  // Otherwise treat as LaTeX
+  const hasLatex = text.includes('\\') || text.includes('\\section');
   if (hasLatex) {
-    content.innerHTML = processLatex(data.content);
+    content.innerHTML = processLatex(text);
   } else {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const withLinks = escHtml(data.content).replace(urlRegex, url =>
-      `<a href="${url}" target="_blank" class="notes-pdf-link">📄 打开文件</a>`
-    );
-    content.innerHTML = `<div class="notes-content mathjax-content">${withLinks}</div>`;
+    content.innerHTML = `<div class="notes-content mathjax-content">${escHtml(text)}</div>`;
   }
   if (window.MathJax) MathJax.typesetPromise([content]);
 }
