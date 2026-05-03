@@ -593,7 +593,7 @@ function processLatex(raw) {
   });
 
   // Protect inline math between dollar signs
-  var imRe = /\$[^\$\n]{1,300}?\$/g;
+  var imRe = /\$([^\n]{1,300}?)\$/g;
   s = s.replace(imRe, function(m) {
     blocks.push({t:'inline', c: m.slice(1,-1)});
     return 'MATHBLOCK' + (blocks.length-1) + 'END';
