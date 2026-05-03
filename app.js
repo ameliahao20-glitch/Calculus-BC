@@ -562,68 +562,6 @@ function formatDate(iso) {
          d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 }
 
-// ============================================================
-// LATEX PREPROCESSOR
-// ============================================================
-function processLatex(content) {
-  if (!content) return '';
-
-  let html = content;
-
-  // Remove document preamble
-  html = html.replace(/\\documentclass[\s\S]*?\\begin\{document\}/m, '');
-  html = html.replace(/\\end\{document\}/g, '');
-  html = html.replace(/\\maketitle/g, '');
-  html = html.replace(/\\usepackage[^}]*\}(\[[^\]]*\])?/g, '');
-  html = html.replace(/\\setcounter[^}]*\}[^}]*\}/g, '');
-  html = html.replace(/\\setlength[^}]*\}[^}]*\}/g, '');
-  html = html.replace(/\\title\{([^}]*)\}/g, '<h1>$1</h1>');
-  html = html.replace(/\\author\{([^}]*)\}/g, '<p><em>$1</em></p>');
-  html = html.replace(/\\date\{([^}]*)\}/g, '<p><em>$1</em></p>');
-
-  // Sections
-  html = html.replace(/\\section\*?\{([^}]*)\}/g, '<h2>$1</h2>');
-  html = html.replace(/\\subsection\*?\{([^}]*)\}/g, '<h3>$1</h3>');
-  html = html.replace(/\\subsubsection\*?\{([^}]*)\}/g, '<h4>$1</h4>');
-
-  // Text formatting
-  html = html.replace(/\\textbf\{([^}]*)\}/g, '<strong>$1</strong>');
-  html = html.replace(/\\textit\{([^}]*)\}/g, '<em>$1</em>');
-  html = html.replace(/\\underline\{([^}]*)\}/g, '<u>$1</u>');
-  html = html.replace(/\\emph\{([^}]*)\}/g, '<em>$1</em>');
-  html = html.replace(/\\text\{([^}]*)\}/g, '$1');
-
-  // Lists
-  html = html.replace(/\\begin\{itemize\}([\s\S]*?)\\end\{itemize\}/g, (_, inner) => {
-    const items = inner.split('\\item').filter(s => s.trim());
-    return '<ul>' + items.map(i => `<li>${i.trim()}</li>`).join('') + '</ul>';
-  });
-  html = html.replace(/\\begin\{enumerate\}([\s\S]*?)\\end\{enumerate\}/g, (_, inner) => {
-    const items = inner.split('\\item').filter(s => s.trim());
-    return '<ol>' + items.map(i => `<li>${i.trim()}</li>`).join('') + '</ol>';
-  });
-
-  // Spacing commands
-  html = html.replace(/\\vspace\{[^}]*\}/g, '<br>');
-  html = html.replace(/\\hspace\{[^}]*\}/g, '&nbsp;');
-  html = html.replace(/\\newline/g, '<br>');
-  html = html.replace(/\\\\/g, '<br>');
-  html = html.replace(/\\noindent/g, '');
-
-  // Display math - preserve for MathJax (must do before other replacements)
-  html = html.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, '\n$$$$\n$1\n$$$$\n');
-
-  // Remove remaining unknown commands but keep content
-  html = html.replace(/\\[a-zA-Z]+\{([^}]*)\}/g, '$1');
-  html = html.replace(/\\[a-zA-Z]+/g, '');
-
-  // Paragraphs
-  html = html.replace(/\n\n+/g, '</p><p>');
-  html = '<p>' + html + '</p>';
-  html = html.replace(/<p>\s*<\/p>/g, '');
-
-  return `<div class="latex-rendered">${html}</div>`;
-}
 
 function showLoginPanel() {
   const overlay = document.getElementById('auth-overlay');
