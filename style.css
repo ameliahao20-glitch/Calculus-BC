@@ -1125,3 +1125,37 @@ body {
   margin: 16px 0;
   overflow-x: auto;
 }
+
+/* ===== MATHQUILL EDITOR ===== */
+.mq-container {
+  margin-bottom: 8px;
+}
+
+.mq-editor {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--cream);
+  cursor: text;
+  font-size: 16px;
+  line-height: 1.6;
+  transition: border-color 0.18s;
+  box-sizing: border-box;
+}
+
+.mq-editor:focus-within {
+  border-color: var(--accent);
+  background: var(--white);
+  outline: none;
+}
+
+.mq-editor .mq-root-block {
+  padding: 4px;
+  min-height: 40px;
+}
+
+.mq-editor .mq-cursor {
+  border-color: var(--accent);
+}
