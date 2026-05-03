@@ -566,103 +566,131 @@ function formatDate(iso) {
 function showLoginPanel() {
   const overlay = document.getElementById('auth-overlay');
   overlay.style.display = overlay.style.display === 'none' ? 'flex' : 'none';
-}function processLatex(raw) {
+}
+
+function processLatex(raw) {
   if (!raw) return '';
 
-  let html = raw;
+  // Step 1: protect math blocks before any text processing
+  const blocks = [];
+  let s = raw;
 
-  // Step 1: protect ALL math FIRST before any other processing
-  const protectedMath = [];
-
-  // Protect display math \[...\]
-  html = html.replace(/\\[[\s\S]*?\\]/g, (m) => {
-    protectedMath.push({ type: 'display', content: m.slice(2, -2) });
-    return `%%MATH${protectedMath.length - 1}%%`;
+  // protect \[...\] display math
+  s = s.replace(/\\[[\s\S]*?\\]/g, function(m) {
+    blocks.push({t:'display', c: m.slice(2,-2)});
+    return '§§' + (blocks.length-1) + '§§';
   });
 
-  // Protect display math \begin{equation}...\end{equation}
-  html = html.replace(/\\begin\{equation\*?\}([\s\S]*?)\\end\{equation\*?\}/g, (m, inner) => {
-    protectedMath.push({ type: 'display', content: inner });
-    return `%%MATH${protectedMath.length - 1}%%`;
+  // protect \begin{equation}...\end{equation}
+  s = s.replace(/\begin\{equation\*?\}[\s\S]*?\end\{equation\*?\}/g, function(m) {
+    var inner = m.replace(/\\begin\{equation\*?\}/, '').replace(/\\end\{equation\*?\}/, '');
+    blocks.push({t:'display', c: inner});
+    return '§§' + (blocks.length-1) + '§§';
   });
 
-  // Protect display math \begin{align}...\end{align}
-  html = html.replace(/\\begin\{align\*?\}([\s\S]*?)\\end\{align\*?\}/g, (m, inner) => {
-    protectedMath.push({ type: 'display', content: inner });
-    return `%%MATH${protectedMath.length - 1}%%`;
+  // protect \begin{align}...\end{align}
+  s = s.replace(/\begin\{align\*?\}[\s\S]*?\end\{align\*?\}/g, function(m) {
+    var inner = m.replace(/\begin\{align\*?\}/, '').replace(/\end\{align\*?\}/, '');
+    blocks.push({t:'align', c: inner});
+    return '§§' + (blocks.length-1) + '§§';
   });
 
-  // Protect inline math $...$
-  html = html.replace(/\$([^$\n]+?)\$/g, (m, inner) => {
-    protectedMath.push({ type: 'inline', content: inner });
-    return `%%MATH${protectedMath.length - 1}%%`;
+  // protect $...$ inline math
+  s = s.replace(/\$([^$
+]{1,200}?)\$/g, function(m, inner) {
+    blocks.push({t:'inline', c: inner});
+    return '§§' + (blocks.length-1) + '§§';
   });
 
-  // Step 2: remove document preamble
-  html = html.replace(/\\documentclass[\s\S]*?\\begin\{document\}/m, '');
-  html = html.replace(/\\end\{document\}/g, '');
-  html = html.replace(/\\maketitle/g, '');
-  html = html.replace(/\\usepackage(\[[^\]]*\])?\{[^}]*\}/g, '');
-  html = html.replace(/\\setcounter\{[^}]*\}\{[^}]*\}/g, '');
-  html = html.replace(/\\setlength\{[^}]*\}\{[^}]*\}/g, '');
-  html = html.replace(/\\geometry\{[^}]*\}/g, '');
+  // Step 2: strip preamble - find \begin{document} and take only after it
+  var beginDoc = s.indexOf('\begin{document}');
+  if (beginDoc !== -1) {
+    s = s.slice(beginDoc + '\begin{document}'.length);
+  }
+  var endDoc = s.indexOf('\end{document}');
+  if (endDoc !== -1) {
+    s = s.slice(0, endDoc);
+  }
 
-  // Title/author/date
-  html = html.replace(/\\title\{([^}]*)\}/g, '<h1>$1</h1>');
-  html = html.replace(/\\author\{([^}]*)\}/g, '<p class="doc-author"><em>$1</em></p>');
-  html = html.replace(/\\date\{([^}]*)\}/g, '<p class="doc-date"><em>$1</em></p>');
+  // Step 3: remove structural commands
+  s = s.replace(/\maketitle/g, '');
+  s = s.replace(/\noindent/g, '');
+  s = s.replace(/\newpage/g, '<hr>');
 
-  // Step 3: sections
-  html = html.replace(/\\section\*?\{([^}]*)\}/g, '</p><h2>$1</h2><p>');
-  html = html.replace(/\\subsection\*?\{([^}]*)\}/g, '</p><h3>$1</h3><p>');
-  html = html.replace(/\\subsubsection\*?\{([^}]*)\}/g, '</p><h4>$1</h4><p>');
+  // Step 4: convert sections
+  s = s.replace(/\section\*?\{([^}]*)\}/g, '
+<h2>$1</h2>
+');
+  s = s.replace(/\subsection\*?\{([^}]*)\}/g, '
+<h3>$1</h3>
+');
+  s = s.replace(/\subsubsection\*?\{([^}]*)\}/g, '
+<h4>$1</h4>
+');
 
-  // Step 4: text formatting
-  html = html.replace(/\\textbf\{([^}]*)\}/g, '<strong>$1</strong>');
-  html = html.replace(/\\textit\{([^}]*)\}/g, '<em>$1</em>');
-  html = html.replace(/\\underline\{([^}]*)\}/g, '<u>$1</u>');
-  html = html.replace(/\\emph\{([^}]*)\}/g, '<em>$1</em>');
-  html = html.replace(/\\text\{([^}]*)\}/g, '$1');
-  html = html.replace(/\\&/g, '&amp;');
+  // Step 5: text formatting
+  s = s.replace(/\textbf\{([^}]*)\}/g, '<strong>$1</strong>');
+  s = s.replace(/\textit\{([^}]*)\}/g, '<em>$1</em>');
+  s = s.replace(/\underline\{([^}]*)\}/g, '<u>$1</u>');
+  s = s.replace(/\emph\{([^}]*)\}/g, '<em>$1</em>');
+  s = s.replace(/\text\{([^}]*)\}/g, '$1');
+  s = s.replace(/\&/g, '&');
 
-  // Step 5: lists
-  html = html.replace(/\\begin\{itemize\}([\s\S]*?)\\end\{itemize\}/g, (_, inner) => {
-    const items = inner.split('\\item').filter(s => s.trim());
-    return '</p><ul>' + items.map(i => `<li>${i.trim()}</li>`).join('') + '</ul><p>';
+  // Step 6: lists
+  s = s.replace(/\begin\{itemize\}([\s\S]*?)\end\{itemize\}/g, function(_, inner) {
+    var items = inner.split('\item').filter(function(x){ return x.trim(); });
+    return '<ul>' + items.map(function(i){ return '<li>' + i.trim() + '</li>'; }).join('') + '</ul>';
   });
-  html = html.replace(/\\begin\{enumerate\}([\s\S]*?)\\end\{enumerate\}/g, (_, inner) => {
-    const items = inner.split('\\item').filter(s => s.trim());
-    return '</p><ol>' + items.map(i => `<li>${i.trim()}</li>`).join('') + '</ol><p>';
+  s = s.replace(/\begin\{enumerate\}([\s\S]*?)\end\{enumerate\}/g, function(_, inner) {
+    var items = inner.split('\item').filter(function(x){ return x.trim(); });
+    return '<ol>' + items.map(function(i){ return '<li>' + i.trim() + '</li>'; }).join('') + '</ol>';
   });
 
-  // Step 6: spacing
-  html = html.replace(/\\vspace\{[^}]*\}/g, '<br>');
-  html = html.replace(/\\hspace\{[^}]*\}/g, '&nbsp;&nbsp;');
-  html = html.replace(/\\newline/g, '<br>');
-  html = html.replace(/\\noindent/g, '');
-  html = html.replace(/\\\\/g, '<br>');
+  // Step 7: spacing
+  s = s.replace(/\vspace\{[^}]*\}/g, '
+');
+  s = s.replace(/\hspace\{[^}]*\}/g, ' ');
+  s = s.replace(/\newline/g, '
+');
+  s = s.replace(/\\\\/g, '
+');
 
-  // Step 7: remove remaining unknown commands
-  html = html.replace(/\\[a-zA-Z]+\{([^}]*)\}/g, '$1');
-  html = html.replace(/\\[a-zA-Z@]+/g, '');
-  html = html.replace(/[{}]/g, '');
+  // Step 8: remove remaining LaTeX commands (keep their content if any)
+  s = s.replace(/\[a-zA-Z]+\{([^}]*)\}/g, '$1');
+  s = s.replace(/\[a-zA-Z@*]+/g, '');
+  s = s.replace(/\{|\}/g, '');
 
-  // Step 8: restore protected math
-  protectedMath.forEach((m, i) => {
-    if (m.type === 'display') {
-      html = html.replace(`%%MATH${i}%%`, `</p><div class="display-math">\\[${m.content}\\]</div><p>`);
+  // Step 9: restore math
+  blocks.forEach(function(b, i) {
+    var placeholder = '§§' + i + '§§';
+    if (b.t === 'display' || b.t === 'align') {
+      s = s.replace(placeholder, '<div class="display-math">\\[' + b.c + '\\]</div>');
     } else {
-      html = html.replace(`%%MATH${i}%%`, `$${m.content}$`);
+      s = s.replace(placeholder, '$' + b.c + '$');
     }
   });
 
-  // Step 9: paragraphs
-  html = html.replace(/\n\n+/g, '</p><p>');
-  html = '<p>' + html + '</p>';
-  html = html.replace(/<p>\s*<\/p>/g, '');
-  html = html.replace(/<p>\s*(<(?:h[1-4]|ul|ol|div))/g, '$1');
-  html = html.replace(/(<\/(?:h[1-4]|ul|ol|div)>)\s*<\/p>/g, '$1');
+  // Step 10: paragraphs
+  var lines = s.split('
+');
+  var result = '';
+  var inPara = false;
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) {
+      if (inPara) { result += '</p>'; inPara = false; }
+      continue;
+    }
+    if (line.startsWith('<h') || line.startsWith('<ul') || line.startsWith('<ol') || line.startsWith('<hr') || line.startsWith('<div')) {
+      if (inPara) { result += '</p>'; inPara = false; }
+      result += line;
+    } else {
+      if (!inPara) { result += '<p>'; inPara = true; }
+      else result += ' ';
+      result += line;
+    }
+  }
+  if (inPara) result += '</p>';
 
-  return `<div class="latex-rendered">${html}</div>`;
+  return '<div class="latex-rendered">' + result + '</div>';
 }
-
