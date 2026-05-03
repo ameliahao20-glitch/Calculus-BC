@@ -20,10 +20,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await db.auth.getSession();
   if (session) {
     currentUser = session.user;
-    showApp();
-  } else {
-    document.getElementById('auth-overlay').style.display = 'flex';
+    updateUserBadge();
   }
+  // Show app directly without requiring login
+  loadPosts();
   loadAnnouncements();
 });
 
@@ -76,21 +76,41 @@ async function doLogin() {
 async function doLogout() {
   await db.auth.signOut();
   currentUser = null;
-  document.getElementById('auth-overlay').style.display = 'flex';
-  document.getElementById('user-badge').textContent = '';
-  document.getElementById('logout-btn').style.display = 'none';
+  document.getElementById('auth-overlay').style.display = 'none';
+  updateUserBadge();
 }
 
 function showApp() {
   document.getElementById('auth-overlay').style.display = 'none';
-  const name = currentUser?.user_metadata?.display_name || currentUser?.email || '用户';
-  document.getElementById('user-badge').textContent = name;
-  document.getElementById('logout-btn').style.display = 'block';
+  updateUserBadge();
   loadPosts();
 }
 
+function updateUserBadge() {
+  const badge = document.getElementById('user-badge');
+  const logoutBtn = document.getElementById('logout-btn');
+  if (currentUser) {
+    const name = currentUser?.user_metadata?.display_name || currentUser?.email || '用户';
+    badge.textContent = name;
+    logoutBtn.style.display = 'block';
+  } else {
+    badge.textContent = '';
+    logoutBtn.style.display = 'none';
+  }
+}
+
 function getDisplayName() {
-  return currentUser?.user_metadata?.display_name || currentUser?.email || '匿名';
+  if (currentUser) {
+    return currentUser?.user_metadata?.display_name || currentUser?.email || '匿名';
+  }
+  // For non-logged-in users, ask for name
+  let name = localStorage.getItem('guest_name');
+  if (!name) {
+    name = prompt('请输入你的名字：');
+    if (name) localStorage.setItem('guest_name', name);
+    else name = '匿名';
+  }
+  return name;
 }
 
 // ============================================================
@@ -161,7 +181,6 @@ function toggleUrgent() {
 }
 
 function openPostModal() {
-  if (!currentUser) { alert('请先登录'); return; }
   document.getElementById('post-modal').classList.add('open');
 }
 
@@ -604,4 +623,9 @@ function processLatex(content) {
   html = html.replace(/<p>\s*<\/p>/g, '');
 
   return `<div class="latex-rendered">${html}</div>`;
+}
+
+function showLoginPanel() {
+  const overlay = document.getElementById('auth-overlay');
+  overlay.style.display = overlay.style.display === 'none' ? 'flex' : 'none';
 }
