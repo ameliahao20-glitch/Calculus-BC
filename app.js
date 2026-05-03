@@ -407,10 +407,10 @@ async function loadNotes(unit) {
     return;
   }
 
-  // Check if content looks like LaTeX document
-  const isFullLatex = data.content.includes('\\documentclass') || data.content.includes('\\begin{document}');
+  // Check if content has any LaTeX commands
+  const hasLatex = data.content.includes('\\') || data.content.includes('\\section') || data.content.includes('\\vspace');
   
-  if (isFullLatex) {
+  if (hasLatex) {
     content.innerHTML = processLatex(data.content);
   } else {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -591,8 +591,8 @@ function processLatex(content) {
   html = html.replace(/\\\\/g, '<br>');
   html = html.replace(/\\noindent/g, '');
 
-  // Display math - preserve for MathJax
-  html = html.replace(/\\\[([\s\S]*?)\\\]/g, '$$[$1]$$');
+  // Display math - preserve for MathJax (must do before other replacements)
+  html = html.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, '\n$$$$\n$1\n$$$$\n');
 
   // Remove remaining unknown commands but keep content
   html = html.replace(/\\[a-zA-Z]+\{([^}]*)\}/g, '$1');

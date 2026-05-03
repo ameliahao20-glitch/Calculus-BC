@@ -1118,3 +1118,10 @@ body {
   color: #1a6fcc;
   border: 1px solid #c5d0fa;
 }
+
+/* ===== DISPLAY MATH ===== */
+.display-math {
+  text-align: center;
+  margin: 16px 0;
+  overflow-x: auto;
+}
