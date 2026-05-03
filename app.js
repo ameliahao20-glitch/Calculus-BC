@@ -582,127 +582,96 @@ function showLoginPanel() {
 
 function processLatex(raw) {
   if (!raw) return '';
+  var s = raw;
+  var blocks = [];
 
-  // Step 1: protect math blocks before any text processing
-  const blocks = [];
-  let s = raw;
-
-  // protect \[...\] display math
-  s = s.replace(/\\[[\s\S]*?\\]/g, function(m) {
+  // Protect display math \[...\]
+  var dmRe = /\\\[[\s\S]*?\\\]/g;
+  s = s.replace(dmRe, function(m) {
     blocks.push({t:'display', c: m.slice(2,-2)});
-    return '§§' + (blocks.length-1) + '§§';
+    return 'MATHBLOCK' + (blocks.length-1) + 'END';
   });
 
-  // protect \begin{equation}...\end{equation}
-  s = s.replace(/\begin\{equation\*?\}[\s\S]*?\end\{equation\*?\}/g, function(m) {
-    var inner = m.replace(/\\begin\{equation\*?\}/, '').replace(/\\end\{equation\*?\}/, '');
-    blocks.push({t:'display', c: inner});
-    return '§§' + (blocks.length-1) + '§§';
+  // Protect inline math between dollar signs
+  var imRe = /\$[^\$\n]{1,300}?\$/g;
+  s = s.replace(imRe, function(m) {
+    blocks.push({t:'inline', c: m.slice(1,-1)});
+    return 'MATHBLOCK' + (blocks.length-1) + 'END';
   });
 
-  // protect \begin{align}...\end{align}
-  s = s.replace(/\begin\{align\*?\}[\s\S]*?\end\{align\*?\}/g, function(m) {
-    var inner = m.replace(/\begin\{align\*?\}/, '').replace(/\end\{align\*?\}/, '');
-    blocks.push({t:'align', c: inner});
-    return '§§' + (blocks.length-1) + '§§';
-  });
+  // Strip preamble
+  var bd = s.indexOf('\\begin{document}');
+  if (bd !== -1) s = s.slice(bd + 16);
+  var ed = s.indexOf('\\end{document}');
+  if (ed !== -1) s = s.slice(0, ed);
 
-  // protect $...$ inline math
-  s = s.replace(/\$([^$
-]{1,200}?)\$/g, function(m, inner) {
-    blocks.push({t:'inline', c: inner});
-    return '§§' + (blocks.length-1) + '§§';
-  });
+  // Remove structure commands
+  s = s.replace(/\\maketitle/g, '');
+  s = s.replace(/\\noindent/g, '');
+  s = s.replace(/\\newpage/g, '<hr>');
 
-  // Step 2: strip preamble - find \begin{document} and take only after it
-  var beginDoc = s.indexOf('\begin{document}');
-  if (beginDoc !== -1) {
-    s = s.slice(beginDoc + '\begin{document}'.length);
-  }
-  var endDoc = s.indexOf('\end{document}');
-  if (endDoc !== -1) {
-    s = s.slice(0, endDoc);
-  }
+  // Sections
+  s = s.replace(/\\section\*?\{([^}]*)\}/g, '\n<h2>$1</h2>\n');
+  s = s.replace(/\\subsection\*?\{([^}]*)\}/g, '\n<h3>$1</h3>\n');
+  s = s.replace(/\\subsubsection\*?\{([^}]*)\}/g, '\n<h4>$1</h4>\n');
 
-  // Step 3: remove structural commands
-  s = s.replace(/\maketitle/g, '');
-  s = s.replace(/\noindent/g, '');
-  s = s.replace(/\newpage/g, '<hr>');
+  // Text formatting
+  s = s.replace(/\\textbf\{([^}]*)\}/g, '<strong>$1</strong>');
+  s = s.replace(/\\textit\{([^}]*)\}/g, '<em>$1</em>');
+  s = s.replace(/\\underline\{([^}]*)\}/g, '<u>$1</u>');
+  s = s.replace(/\\emph\{([^}]*)\}/g, '<em>$1</em>');
+  s = s.replace(/\\text\{([^}]*)\}/g, '$1');
+  s = s.replace(/\\&/g, '&');
 
-  // Step 4: convert sections
-  s = s.replace(/\section\*?\{([^}]*)\}/g, '
-<h2>$1</h2>
-');
-  s = s.replace(/\subsection\*?\{([^}]*)\}/g, '
-<h3>$1</h3>
-');
-  s = s.replace(/\subsubsection\*?\{([^}]*)\}/g, '
-<h4>$1</h4>
-');
-
-  // Step 5: text formatting
-  s = s.replace(/\textbf\{([^}]*)\}/g, '<strong>$1</strong>');
-  s = s.replace(/\textit\{([^}]*)\}/g, '<em>$1</em>');
-  s = s.replace(/\underline\{([^}]*)\}/g, '<u>$1</u>');
-  s = s.replace(/\emph\{([^}]*)\}/g, '<em>$1</em>');
-  s = s.replace(/\text\{([^}]*)\}/g, '$1');
-  s = s.replace(/\&/g, '&');
-
-  // Step 6: lists
-  s = s.replace(/\begin\{itemize\}([\s\S]*?)\end\{itemize\}/g, function(_, inner) {
-    var items = inner.split('\item').filter(function(x){ return x.trim(); });
+  // Lists
+  s = s.replace(/\\begin\{itemize\}([\s\S]*?)\\end\{itemize\}/g, function(_, inner) {
+    var items = inner.split('\\item').filter(function(x){ return x.trim(); });
     return '<ul>' + items.map(function(i){ return '<li>' + i.trim() + '</li>'; }).join('') + '</ul>';
   });
-  s = s.replace(/\begin\{enumerate\}([\s\S]*?)\end\{enumerate\}/g, function(_, inner) {
-    var items = inner.split('\item').filter(function(x){ return x.trim(); });
+  s = s.replace(/\\begin\{enumerate\}([\s\S]*?)\\end\{enumerate\}/g, function(_, inner) {
+    var items = inner.split('\\item').filter(function(x){ return x.trim(); });
     return '<ol>' + items.map(function(i){ return '<li>' + i.trim() + '</li>'; }).join('') + '</ol>';
   });
 
-  // Step 7: spacing
-  s = s.replace(/\vspace\{[^}]*\}/g, '
-');
-  s = s.replace(/\hspace\{[^}]*\}/g, ' ');
-  s = s.replace(/\newline/g, '
-');
-  s = s.replace(/\\\\/g, '
-');
+  // Spacing
+  s = s.replace(/\\vspace\{[^}]*\}/g, '\n');
+  s = s.replace(/\\hspace\{[^}]*\}/g, ' ');
+  s = s.replace(/\\newline/g, '\n');
 
-  // Step 8: remove remaining LaTeX commands (keep their content if any)
-  s = s.replace(/\[a-zA-Z]+\{([^}]*)\}/g, '$1');
-  s = s.replace(/\[a-zA-Z@*]+/g, '');
+  // Remove remaining commands
+  s = s.replace(/\\[a-zA-Z]+\{([^}]*)\}/g, '$1');
+  s = s.replace(/\\[a-zA-Z@*]+/g, '');
   s = s.replace(/\{|\}/g, '');
 
-  // Step 9: restore math
+  // Restore math
   blocks.forEach(function(b, i) {
-    var placeholder = '§§' + i + '§§';
-    if (b.t === 'display' || b.t === 'align') {
-      s = s.replace(placeholder, '<div class="display-math">\\[' + b.c + '\\]</div>');
+    var ph = 'MATHBLOCK' + i + 'END';
+    if (b.t === 'display') {
+      s = s.replace(ph, '<div class="display-math">\\[' + b.c + '\\]</div>');
     } else {
-      s = s.replace(placeholder, '$' + b.c + '$');
+      s = s.replace(ph, '$' + b.c + '$');
     }
   });
 
-  // Step 10: paragraphs
-  var lines = s.split('
-');
-  var result = '';
-  var inPara = false;
+  // Build paragraphs
+  var lines = s.split('\n');
+  var out = '';
+  var inP = false;
   for (var i = 0; i < lines.length; i++) {
-    var line = lines[i].trim();
-    if (!line) {
-      if (inPara) { result += '</p>'; inPara = false; }
+    var ln = lines[i].trim();
+    if (!ln) {
+      if (inP) { out += '</p>'; inP = false; }
       continue;
     }
-    if (line.startsWith('<h') || line.startsWith('<ul') || line.startsWith('<ol') || line.startsWith('<hr') || line.startsWith('<div')) {
-      if (inPara) { result += '</p>'; inPara = false; }
-      result += line;
+    if (/^<(h[1-4]|ul|ol|hr|div)/.test(ln)) {
+      if (inP) { out += '</p>'; inP = false; }
+      out += ln;
     } else {
-      if (!inPara) { result += '<p>'; inPara = true; }
-      else result += ' ';
-      result += line;
+      if (!inP) { out += '<p>'; inP = true; } else out += ' ';
+      out += ln;
     }
   }
-  if (inPara) result += '</p>';
+  if (inP) out += '</p>';
 
-  return '<div class="latex-rendered">' + result + '</div>';
+  return '<div class="latex-rendered">' + out + '</div>';
 }
