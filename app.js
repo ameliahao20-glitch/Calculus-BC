@@ -726,7 +726,9 @@ function showLoginPanel() {
   html = html.replace(/(<\/(?:h[1-4]|ul|ol|div)>)\s*<\/p>/g, '$1');
 
   return `<div class="latex-rendered">${html}</div>`;
-}onst SUPABASE_URL = 'https://srahnugolqsjqqvaptem.supabase.co';
+}
+
+const SUPABASE_URL = 'https://srahnugolqsjqqvaptem.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyYWhudWdvbHFzanFxdmFwdGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MDM1ODIsImV4cCI6MjA5MzI3OTU4Mn0.WFlWgi6lMB7thw9CXQIC7Yb-fIuMGLd6UhgzAzGCGJM';
 const TEACHER_PASSWORD = 'maythefivebewithu';
 
